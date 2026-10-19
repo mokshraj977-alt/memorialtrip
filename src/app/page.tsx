@@ -2,18 +2,22 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { TourCard } from "@/components/TourCard";
+import { TaxiBookingExperience } from "@/components/TaxiBookingForm";
+import { WhatsAppLink } from "@/components/WhatsAppLink";
+import {
+  GENERAL_WHATSAPP_MESSAGE,
+  packageWhatsAppMessage,
+  PHONE_NUMBERS,
+} from "@/config/contact";
 import { heroImage, packages, type TourCategory, type TourPackage } from "@/data/packages";
 
-const phoneNumbers = [
-  { label: "+91 99994 12582", href: "tel:+919999412582" },
-  { label: "+91 84473 81443", href: "tel:+918447384143" },
-];
-
-const navigation = [
+const navigation: { label: string; href: string; category?: TourCategory }[] = [
   { label: "Destinations", href: "#destinations" },
-  { label: "Domestic tours", href: "#packages-domestic" },
-  { label: "International", href: "#packages-international" },
+  { label: "Domestic tours", href: "#packages", category: "Domestic" },
+  { label: "International", href: "#packages", category: "International" },
+  { label: "Taxi services", href: "#taxi-services" },
   { label: "Our story", href: "#our-story" },
 ];
 
@@ -26,7 +30,7 @@ export default function Home() {
   const [travellers, setTravellers] = useState("2");
   const [formDestination, setFormDestination] = useState("");
   const [selectedTour, setSelectedTour] = useState<TourPackage | null>(null);
-  const [feedback, setFeedback] = useState<"success" | "error" | null>(null);
+  const [feedback, setFeedback] = useState<"unavailable" | "error" | null>(null);
   const packagesRef = useRef<HTMLElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -51,11 +55,18 @@ export default function Home() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [selectedTour]);
 
-  const searchPackages = (event: React.FormEvent<HTMLFormElement>) => {
+  const searchPackages = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSearchTerm(destinationDraft);
     setFormDestination(destinationDraft);
     setCategory("All");
+    packagesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const showCategory = (value: TourCategory) => {
+    setCategory(value);
+    setSearchTerm("");
+    setDestinationDraft("");
     packagesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -66,7 +77,7 @@ export default function Home() {
     window.setTimeout(() => nameRef.current?.focus(), 450);
   };
 
-  const submitEnquiry = (event: React.FormEvent<HTMLFormElement>) => {
+  const submitEnquiry = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     if (!form.checkValidity()) {
@@ -74,21 +85,11 @@ export default function Home() {
       form.reportValidity();
       return;
     }
-    setFeedback("success");
-    form.reset();
-    setFormDestination("");
-    setTravelDate("");
-    setTravellers("2");
+    setFeedback("unavailable");
   };
 
   return (
     <>
-      <div className="demo-ribbon">
-        <span>INDEPENDENT REDESIGN DEMO</span>
-        <span className="ribbon-divider" aria-hidden="true" />
-        Package details and enquiry interactions are for demonstration only
-      </div>
-
       <header className="site-header">
         <a aria-label="MemorialTrip home" className="brand" href="#home">
           <span aria-hidden="true" className="brand-mark">M</span>
@@ -106,13 +107,30 @@ export default function Home() {
         </button>
         <nav aria-label="Main navigation" className={menuOpen ? "main-nav is-open" : "main-nav"}>
           {navigation.map((item) => (
-            <a href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>
+            <a
+              href={item.href}
+              key={item.label}
+              onClick={() => {
+                if (item.category) {
+                  showCategory(item.category);
+                }
+                setMenuOpen(false);
+              }}
+            >
               {item.label}
             </a>
           ))}
           <a className="nav-contact" href="#enquiry" onClick={() => setMenuOpen(false)}>
             Let&apos;s talk <span aria-hidden="true">↗</span>
           </a>
+          <WhatsAppLink
+            className="nav-whatsapp"
+            label="Enquire on WhatsApp"
+            message={GENERAL_WHATSAPP_MESSAGE}
+            onClick={() => setMenuOpen(false)}
+          >
+            WhatsApp <span aria-hidden="true">↗</span>
+          </WhatsAppLink>
         </nav>
       </header>
 
@@ -150,7 +168,6 @@ export default function Home() {
             </div>
           </div>
           <div aria-hidden="true" className="hero-side-note">
-            <span>01 / 03</span>
             <span className="side-note-line" />
             <span>THE ART OF GETTING AWAY</span>
           </div>
@@ -214,7 +231,7 @@ export default function Home() {
             </button>
           </form>
           <p className="search-note">
-            Dates and traveller count are enquiry preferences, not live availability.
+            Share your dates and group size when you enquire.
           </p>
         </div>
 
@@ -226,8 +243,8 @@ export default function Home() {
                 <h2 id="featured-heading">Journeys worth <em>looking forward to.</em></h2>
               </div>
               <p className="section-intro">
-                A few of the journeys featured on MemorialTrip&apos;s current website.
-                Prices shown are the published starting prices; please reconfirm them.
+                Discover journeys across India and beyond. Contact us to reconfirm
+                current starting prices and details.
               </p>
             </div>
 
@@ -273,11 +290,9 @@ export default function Home() {
                 </button>
               </div>
             )}
-            <p className="content-disclosure">
-              Package names and starting prices are transcribed from the live homepage. They may
-              change and are not a quote or confirmation. Card descriptions, where shown in
-              details, are demo copy. Itineraries, duration, inclusions and exclusions require
-              confirmation from MemorialTrip.
+            <p className="package-note">
+              Starting prices may change. Contact MemorialTrip for current prices,
+              itinerary details and availability.
             </p>
           </div>
         </section>
@@ -298,9 +313,7 @@ export default function Home() {
               <button
                 className="destination-tile destination-india"
                 onClick={() => {
-                  setCategory("Domestic");
-                  setSearchTerm("");
-                  packagesRef.current?.scrollIntoView({ behavior: "smooth" });
+                  showCategory("Domestic");
                 }}
                 type="button"
               >
@@ -321,9 +334,7 @@ export default function Home() {
               <button
                 className="destination-tile destination-away"
                 onClick={() => {
-                  setCategory("International");
-                  setSearchTerm("");
-                  packagesRef.current?.scrollIntoView({ behavior: "smooth" });
+                  showCategory("International");
                 }}
                 type="button"
               >
@@ -345,14 +356,22 @@ export default function Home() {
           </div>
         </section>
 
+        <TaxiBookingExperience
+          onExplorePackages={() => {
+            setCategory("Domestic");
+            setSearchTerm("");
+            setDestinationDraft("");
+          }}
+        />
+
         <section aria-labelledby="travel-style-heading" className="section section-style">
           <div className="page-wrap style-layout">
             <div className="style-heading">
               <p className="eyebrow"><span className="eyebrow-rule" /> YOUR TRIP, YOUR TEMPO</p>
               <h2 id="travel-style-heading">Travel the way <em>you are.</em></h2>
               <p>
-                Looking for a particular kind of escape? Tell us what you have in mind.
-                The examples below are inspiration, not a confirmed service menu.
+                Every journey starts with a different idea. Tell us what kind of
+                time away you have in mind.
               </p>
               <a className="text-link" href="#enquiry">Start a conversation <span aria-hidden="true">→</span></a>
             </div>
@@ -383,12 +402,12 @@ export default function Home() {
           <div className="page-wrap story-layout">
             <div className="story-image-wrap">
               <Image
-                alt="A calm Kerala backwater beneath the palms"
+                alt="A houseboat on a calm tropical waterway"
                 className="story-image"
                 fill
                 loading="lazy"
                 sizes="(max-width: 760px) 90vw, 45vw"
-                src="https://images.unsplash.com/photo-1602301413444-3f5d1d3f5bba?auto=format&fit=crop&w=1200&q=85"
+                src="https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=1200&q=85"
               />
               <span className="story-image-caption">KERALA, INDIA</span>
             </div>
@@ -396,9 +415,8 @@ export default function Home() {
               <p className="eyebrow"><span className="eyebrow-rule" /> A NOTE FROM THE ROAD</p>
               <h2 id="story-heading">The best trips feel <em>like yours.</em></h2>
               <p>
-                MemorialTrip&apos;s website features journeys across India and international
-                destinations. This redesign keeps the destinations and package names visitors
-                already know, while making space for a more considered way to explore them.
+                From Kerala&apos;s green hills and backwaters to island escapes in Andaman
+                and Lakshadweep, explore journeys across India and beyond.
               </p>
               <blockquote>
                 <span aria-hidden="true" className="quote-mark">“</span>
@@ -409,7 +427,7 @@ export default function Home() {
                   tickets and vouchers were organized and accepted everywhere, driver was on
                   time everything was planned Thank you Memorialtrip Team.
                 </p>
-                <cite>Vivekanand Family <span>· featured on MemorialTrip&apos;s About page</span></cite>
+                <cite>Vivekanand Family</cite>
               </blockquote>
             </div>
           </div>
@@ -430,8 +448,8 @@ export default function Home() {
             <p className="eyebrow light-eyebrow"><span className="eyebrow-rule" /> LET&apos;S START WITH A HELLO</p>
             <h2 id="enquiry-heading">Where would you <em>like to go?</em></h2>
             <p className="enquiry-copy">
-              Share a few details. This local demo will show you how an enquiry could feel;
-              nothing is sent to or saved by MemorialTrip.
+              Share a few details to get started. For current package information,
+              you can also reach us directly by phone or email.
             </p>
             <form className="enquiry-form" onSubmit={submitEnquiry}>
               <div className="form-row">
@@ -484,17 +502,26 @@ export default function Home() {
                   Please check the required fields and enter a valid email address.
                 </p>
               )}
-              {feedback === "success" && (
-                <p className="form-feedback success-message" role="status">
-                  Demo enquiry complete. This was not sent to MemorialTrip and has not been saved.
+              {feedback === "unavailable" && (
+                <p className="form-feedback unavailable-message" role="status">
+                  Online form submissions are not connected yet. Your enquiry has not
+                  been sent. Please continue on WhatsApp or contact us directly.
                 </p>
               )}
               <button className="button button-gold form-submit" type="submit">
-                Preview demo enquiry <span aria-hidden="true">↗</span>
+                Continue enquiry <span aria-hidden="true">↗</span>
               </button>
-              <p className="form-disclaimer">
-                Demonstration only. No email, message or booking is sent, stored or confirmed.
+              <p className="form-note">
+                Online enquiries will be available once the enquiry integration is complete.
+                For now, please contact us directly.
               </p>
+              <WhatsAppLink
+                className="button button-whatsapp enquiry-whatsapp"
+                label="Enquire on WhatsApp about travel packages and services"
+                message={GENERAL_WHATSAPP_MESSAGE}
+              >
+                Enquire on WhatsApp <span aria-hidden="true">↗</span>
+              </WhatsAppLink>
             </form>
           </div>
         </section>
@@ -509,19 +536,18 @@ export default function Home() {
                 <span className="brand-name">memorial<span>trip</span></span>
               </a>
               <p>A little inspiration for the journey ahead.</p>
-              <span className="footer-demo">Independent redesign demo</span>
             </div>
             <div className="footer-column">
               <h2>Discover</h2>
               <a href="#destinations">Destinations</a>
-              <a href="#packages-domestic" onClick={() => setCategory("Domestic")}>Domestic tours</a>
-              <a href="#packages-international" onClick={() => setCategory("International")}>International tours</a>
+              <a href="#packages" onClick={() => showCategory("Domestic")}>Domestic tours</a>
+              <a href="#packages" onClick={() => showCategory("International")}>International tours</a>
               <a href="#our-story">Our story</a>
             </div>
             <div className="footer-column">
               <h2>Get in touch</h2>
               <a href="mailto:infomemorialtrip@gmail.com">infomemorialtrip@gmail.com</a>
-              {phoneNumbers.map((phone) => (
+              {PHONE_NUMBERS.map((phone) => (
                 <a href={phone.href} key={phone.href}>{phone.label}</a>
               ))}
               <address>
@@ -531,8 +557,8 @@ export default function Home() {
             </div>
           </div>
           <div className="footer-bottom">
-            <span>© MemorialTrip · independent redesign demo</span>
-            <span>Contact details are shown as listed on MemorialTrip&apos;s current website.</span>
+            <span>© MemorialTrip. All rights reserved.</span>
+            <a href="mailto:infomemorialtrip@gmail.com">Get in touch</a>
           </div>
         </div>
       </footer>
@@ -574,40 +600,52 @@ export default function Home() {
             <div className="dialog-content">
               <p className="eyebrow"><span className="eyebrow-rule" /> {selectedTour.destinations.join(" · ")}</p>
               <h2 id="tour-dialog-title">{selectedTour.name}</h2>
-              <p className="dialog-demo-note">
-                Demo detail preview · confirm all package information with MemorialTrip.
-              </p>
               <div className="dialog-facts">
-                <div><span>Duration</span><strong>{selectedTour.duration ?? "Not published; please enquire"}</strong></div>
-                <div><span>Listed starting price</span><strong>₹{selectedTour.price.toLocaleString("en-IN")}</strong></div>
+                <div>
+                  <span>Duration</span>
+                  <strong>{selectedTour.duration ? "3 nights · 4 days" : "Contact us for trip duration"}</strong>
+                </div>
+                <div>
+                  <span>Starting from</span>
+                  <strong>₹{selectedTour.price.toLocaleString("en-IN")}</strong>
+                </div>
               </div>
               <div className="dialog-detail-grid">
                 <section>
                   <h3>Itinerary</h3>
-                  <p>Day-by-day routing is not available in the source listing. Please request the current itinerary directly from MemorialTrip.</p>
+                  <p>Contact us for itinerary and availability.</p>
                 </section>
                 <section>
-                  <h3>Inclusions &amp; exclusions</h3>
-                  <p>Package inclusions and exclusions were not published in the information reviewed. Confirm these before making any plans.</p>
+                  <h3>Package details</h3>
+                  <p>Get in touch for current inclusions, exclusions and travel details.</p>
                 </section>
               </div>
               <p className="dialog-price-note">
-                The starting price is transcribed from MemorialTrip&apos;s live homepage and may be out of date.
-                It is not a quote, booking or live availability indication.
+                Starting prices may change and are subject to confirmation. Contact us
+                for current pricing and availability.
               </p>
-              <button
-                className="button button-navy dialog-enquiry"
-                onClick={() => startEnquiry(selectedTour.name)}
-                type="button"
-              >
-                Enquire in this demo <span aria-hidden="true">↗</span>
-              </button>
+              <div className="dialog-actions">
+                <button
+                  className="button button-navy dialog-enquiry"
+                  onClick={() => startEnquiry(selectedTour.name)}
+                  type="button"
+                >
+                  Enquire about this journey <span aria-hidden="true">↗</span>
+                </button>
+                <WhatsAppLink
+                  className="button button-whatsapp dialog-whatsapp"
+                  label={`Enquire on WhatsApp about ${selectedTour.name}`}
+                  message={packageWhatsAppMessage(selectedTour.name)}
+                >
+                  WhatsApp enquiry <span aria-hidden="true">↗</span>
+                </WhatsAppLink>
+              </div>
             </div>
           </section>
         </div>
       )}
 
-      <a aria-label="Contact MemorialTrip by phone" className="mobile-call" href={phoneNumbers[0].href}>
+      <a aria-label="Contact MemorialTrip by phone" className="mobile-call" href={PHONE_NUMBERS[0].href}>
         Call MemorialTrip <span aria-hidden="true">↗</span>
       </a>
     </>

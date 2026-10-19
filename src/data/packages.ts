@@ -78,8 +78,8 @@ export const packages: TourPackage[] = [
     category: "Domestic",
     destinations: ["Andaman"],
     image:
-      "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1000&q=85",
-    imageAlt: "A quiet beach framed by tropical greenery",
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1000&q=85",
+    imageAlt: "Clear blue water along a tropical beach",
     price: 59900,
   },
   {
@@ -88,8 +88,8 @@ export const packages: TourPackage[] = [
     category: "Domestic",
     destinations: ["Kerala"],
     image:
-      "https://images.unsplash.com/photo-1602301413444-3f5d1d3f5bba?auto=format&fit=crop&w=1000&q=85",
-    imageAlt: "A boat cruising through a calm tropical waterway",
+      "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=1000&q=85",
+    imageAlt: "A houseboat on a calm tropical waterway",
     price: 16049,
   },
   {

@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { packageWhatsAppMessage } from "@/config/contact";
+import { WhatsAppLink } from "@/components/WhatsAppLink";
 import type { TourPackage } from "@/data/packages";
 
 type TourCardProps = {
@@ -38,20 +40,29 @@ export function TourCard({ tour, onOpen }: TourCardProps) {
         <h3>{tour.name}</h3>
         <div className="tour-card-bottom">
           <div>
-            <span className="price-caption">Listed from</span>
+            <span className="price-caption">Starting from</span>
             <strong>₹{tour.price.toLocaleString("en-IN")}</strong>
           </div>
           <span className="duration">
-            {tour.duration ? "3N · 4D" : "Duration on request"}
+            {tour.duration ? "3 nights · 4 days" : "Contact for duration"}
           </span>
         </div>
-        <button
-          className="text-link"
-          onClick={() => onOpen(tour)}
-          type="button"
-        >
-          Explore journey <span aria-hidden="true">→</span>
-        </button>
+        <div className="tour-card-actions">
+          <button
+            className="text-link"
+            onClick={() => onOpen(tour)}
+            type="button"
+          >
+            Explore journey <span aria-hidden="true">→</span>
+          </button>
+          <WhatsAppLink
+            className="whatsapp-card-link"
+            label={`Enquire on WhatsApp about ${tour.name}`}
+            message={packageWhatsAppMessage(tour.name)}
+          >
+            WhatsApp <span aria-hidden="true">↗</span>
+          </WhatsAppLink>
+        </div>
       </div>
     </article>
   );
